@@ -1,0 +1,20 @@
+{
+	"name": "11_Querying_delta_files",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/discovery"
+		},
+		"content": {
+			"query": "-- querying delta lake files\n-- select the main folder when reading delta files not the sub folders\n-- cannot query subfolders when reading delta files\n-- extra cols are added to the read dataframe to reflect the source subfolders\n-- delta logs keep track of transactions\n\nUSE nyc_taxi_discovery;\n\nSELECT TOP(100)\n    *\nFROM OPENROWSET(\n    BULK 'trip_data_green_delta/',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'DELTA'\n) AS trip_data;\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_discovery",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
