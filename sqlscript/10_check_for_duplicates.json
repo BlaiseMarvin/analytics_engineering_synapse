@@ -1,0 +1,20 @@
+{
+	"name": "10_check_for_duplicates",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/discovery"
+		},
+		"content": {
+			"query": "SELECT \n    *\nFROM OPENROWSET(\n    BULK 'taxi_zone.csv',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    FIRSTROW = 2\n) WITH(\n    location_id SMALLINT 1,\n    borough VARCHAR(15) 2,\n    zone VARCHAR(50) 3,\n    service_zone VARCHAR(15) 4\n)AS [result]\n\n\n-- we need to check for duplicates\n-- we group by what we think is the unique value\n-- and then use the count function to retrieve row counts\nSELECT\n    location_id,\n    COUNT(*) AS count_\nFROM OPENROWSET(\n    BULK 'taxi_zone.csv',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    FIRSTROW = 2\n) WITH(\n    location_id SMALLINT 1,\n    borough VARCHAR(15) 2,\n    zone VARCHAR(50) 3,\n    service_zone VARCHAR(15) 4\n)AS [result]\nGROUP BY location_id\nHAVING COUNT(*) > 1\n\n\nSELECT\n    location_id,\n    COUNT(*) AS count_\nFROM OPENROWSET(\n    BULK 'taxi_zone.csv',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    FIRSTROW = 2\n) WITH(\n    location_id SMALLINT 1,\n    borough VARCHAR(15) 2,\n    zone VARCHAR(50) 3,\n    service_zone VARCHAR(15) 4\n)AS [result]\nGROUP BY location_id\nORDER BY COUNT(*) DESC\n\n-- no dupicates in the data\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_discovery",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
