@@ -1,0 +1,20 @@
+{
+	"name": "10_parquet_folders_subfolders",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/discovery"
+		},
+		"content": {
+			"query": "/*\n    Assignment:\n      - Query from folders using wildcards\n      - use the filename function\n      - query from subfolders as well\n      - use the filepath function to select only from certain partitions\n*/\n\nSELECT TOP(100) *, trip_parquet.filename(), trip_parquet.filepath(1), trip_parquet.filepath(2), trip_parquet.filepath(3)\nFROM OPENROWSET(\n    BULK 'trip_data_green_parquet/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'PARQUET'\n) WITH(\n    tip_amount FLOAT,\n    trip_type INT\n) AS trip_parquet",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_discovery",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "8_explore_trip_data",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/discovery"
+		},
+		"content": {
+			"query": "\n-- selecting data from folders is as below\n-- you also can specify something like /month=01/* => to read all files\n-- or you can specify /month=01/*.csv => reads all csv files\nSELECT \n    TOP 100 *\nFROM OPENROWSET(\n        BULK 'trip_data_green_csv/year=2020/month=01/',\n        DATA_SOURCE = 'nyc_taxi_data_raw',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS [result]\n\n-- selecting data from subfolders\nSELECT \n    TOP 100 *\nFROM OPENROWSET(\n    BULK 'trip_data_green_csv/year=2020/*/*.csv',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW=TRUE\n) AS [result]\nORDER  BY lpep_pickup_datetime DESC\n\n-- COULD ALSO DO AS BELOW:\nSELECT \n    TOP 100 *\nFROM OPENROWSET(\n    BULK 'trip_data_green_csv/year=2020/**',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW=TRUE\n) AS [result]\nORDER  BY lpep_pickup_datetime DESC\n\n-- CAN ALSO SEND ONLY A SPECIFIC LIST OF FILES TO THE BULK OPERATOR\n-- GET DATA ONLY FROM JAN AND FEB\nSELECT \n    TOP 100 *\nFROM OPENROWSET(\n    BULK ('trip_data_green_csv/year=2020/month=01/*.csv',\n          'trip_data_green_csv/year=2020/month=03/*.csv'),\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE\n) AS [result]\n\n-- using more than 1 wild card character\nSELECT \n    TOP 100 *\nFROM OPENROWSET(\n    BULK 'trip_data_green_csv/year=*/month=*/*.csv',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE\n) AS [result]\nORDER BY lpep_pickup_datetime DESC\n\n\n-- ADDING FILE METADATA FUNCTIONS\n-- THE FILE NAME\nSELECT \n    TOP 100\n    result.filename() AS file_name,\n    result.filepath(1) AS year,\n    result.filepath(2) AS month,\n    result.filepath(3) AS file_,\n    COUNT(result.filename()) AS record_count\nFROM OPENROWSET(\n    BULK 'trip_data_green_csv/year=*/month=*/*.csv',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'CSV',\n    PARSER_VERSION = '2.0',\n    HEADER_ROW = TRUE\n) AS result\nWHERE result.filename() LIKE '%2020-01%' OR result.filename() LIKE '%2021-01%'\nGROUP BY result.filename(), result.filepath(1),result.filepath(2),result.filepath(3)\nORDER BY record_count DESC\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_discovery",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

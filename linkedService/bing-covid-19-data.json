@@ -1,0 +1,12 @@
+{
+	"name": "bing-covid-19-data",
+	"type": "Microsoft.Synapse/workspaces/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"sasUri": "https://pandemicdatalake.blob.core.windows.net/public/curated/covid-19/bing_covid-19_data/latest/bing_covid-19_data.parquet",
+			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIlNZTkFQU0VAREM5RjA2QkItQ0E1OC00Mzg3LUE0QjQtNkU5Q0ZEODZFOERGX2ExN2I0M2U4LTA0ZDYtNDEwOC1iNzZiLWVhY2FiMGQxMzlhZSINCn0="
+		}
+	}
+}

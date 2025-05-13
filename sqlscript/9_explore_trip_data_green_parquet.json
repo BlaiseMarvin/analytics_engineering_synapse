@@ -1,0 +1,20 @@
+{
+	"name": "9_explore_trip_data_green_parquet",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/discovery"
+		},
+		"content": {
+			"query": "-- query single parquet file\nSELECT TOP(100) *\nFROM OPENROWSET(\n    BULK 'trip_data_green_parquet/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'PARQUET'\n) AS trip_parquet\n\n\n-- need to check out the data types inferred during this read operation by the openrowset function\nEXEC sp_describe_first_result_set N'SELECT TOP(100) *\nFROM OPENROWSET(\n    BULK ''trip_data_green_parquet/year=*/month=*/*.parquet'',\n    DATA_SOURCE = ''nyc_taxi_data_raw'',\n    FORMAT = ''PARQUET''\n) AS trip_parquet\n'\n\n-- DEFINE your own data types - good if we're running the query over and over again and need to keep the costs down\nSELECT TOP(100) *\nFROM OPENROWSET(\n    BULK 'trip_data_green_parquet/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'PARQUET'\n) WITH (\n    VendorID INT,\n    lpep_pickup_datetime datetime2(7),\n    lpep_dropoff_datetime datetime2(7),\n    store_and_fwd_flag CHAR(1),\n    RatecodeID INT,\n    PULocationID INT,\n    DOLocationID INT,\n    passenger_count INT,\n    trip_distance FLOAT,\n    fare_amount FLOAT,\n    extra FLOAT,\n    mta_tax FLOAT,\n    tip_amount FLOAT,\n    tolls_amount FLOAT,\n    ehail_fee INT,\n    improvement_surchage FLOAT,\n    total_amount FLOAT,\n    payment_type INT, \n    trip_type INT,\n    congestion_surchage FLOAT \n) AS trip_parquet\n\n-- parquet is efficient when selecting only a subset of the columns]\n-- query engine works best in those conditions and saves costs as well\nSELECT TOP(100) *\nFROM OPENROWSET(\n    BULK 'trip_data_green_parquet/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_data_raw',\n    FORMAT = 'PARQUET'\n) WITH (\n    tip_amount FLOAT,\n    trip_type INT\n) AS trip_parquet\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_discovery",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
