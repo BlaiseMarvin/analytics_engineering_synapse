@@ -1,5 +1,5 @@
 {
-	"name": "create_databases",
+	"name": "1_create_databases",
 	"properties": {
 		"folder": {
 			"name": "nyc_taxi/ldw"
