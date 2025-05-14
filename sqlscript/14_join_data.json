@@ -1,0 +1,20 @@
+{
+	"name": "14_join_data",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/discovery"
+		},
+		"content": {
+			"query": "SELECT \n    taxi_zone.borough,\n    COUNT(*) AS number_of_trips\nFROM OPENROWSET(\n        BULK 'trip_data_green_csv/year=2020/month=01/',\n        DATA_SOURCE = 'nyc_taxi_data_raw',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS trip_data\nJOIN OPENROWSET(\n            BULK 'taxi_zone.csv',\n            DATA_SOURCE = 'nyc_taxi_data_raw',\n            FORMAT = 'CSV',\n            PARSER_VERSION = '2.0',\n            FIRSTROW = 2\n        ) WITH(\n            location_id SMALLINT 1,\n            borough VARCHAR(15) 2,\n            zone VARCHAR(50) 3,\n            service_zone VARCHAR(15) 4\n        )AS taxi_zone\nON trip_data.PULocationID = taxi_zone.location_id\nGROUP BY taxi_zone.borough\nORDER BY taxi_zone.borough\n\n\nSELECT \n    lpep_pickup_datetime,\n    lpep_dropoff_datetime,\n    DATEDIFF(minute, lpep_pickup_datetime, lpep_dropoff_datetime)\nFROM OPENROWSET(\n        BULK 'trip_data_green_csv/year=2020/month=01/',\n        DATA_SOURCE = 'nyc_taxi_data_raw',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW=TRUE\n    ) AS trip_data\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_discovery",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
