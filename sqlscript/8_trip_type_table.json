@@ -1,0 +1,17 @@
+{
+	"name": "8_trip_type_table",
+	"properties": {
+		"content": {
+			"query": "-- This is auto-generated code\nUSE nyc_taxi_ldw;\n\nCREATE EXTERNAL TABLE bronze.trip_type \n(\n    trip_type TINYINT,\n    trip_type_desc VARCHAR(50)\n) WITH (\n    LOCATION = 'raw/trip_type.tsv',\n    DATA_SOURCE = nyc_taxi_src,\n    FILE_FORMAT = tsv_file_format\n)",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
