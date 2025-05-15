@@ -1,0 +1,20 @@
+{
+	"name": "6_create_bronze_vendor",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/ldw"
+		},
+		"content": {
+			"query": "USE nyc_taxi_ldw;\n\n\n\nCREATE EXTERNAL TABLE bronze.vendor\n(\n    vendor_id TINYINT,\n    vendor_name VARCHAR(50)\n) WITH(\n    LOCATION = 'raw/vendor.csv',\n    DATA_SOURCE = nyc_taxi_src,\n    FILE_FORMAT = csv_file_format\n)",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
