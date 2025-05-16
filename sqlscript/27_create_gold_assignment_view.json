@@ -1,0 +1,20 @@
+{
+	"name": "27_create_gold_assignment_view",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/ldw"
+		},
+		"content": {
+			"query": "USE nyc_taxi_ldw\nGO \n\nDROP VIEW IF EXISTS trip_data_green_ass_view\n\nGO\n\nCREATE VIEW trip_data_green_ass_view AS\nSELECT \n    ass.filepath(1) AS year,\n    ass.filepath(2) AS month,\n    ass.* \nFROM OPENROWSET(\n    BULK 'gold/trip_data_green_ass/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_src',\n    FORMAT = 'PARQUET'\n) WITH (\n    borough VARCHAR(50),\n    trip_date DATE,\n    trip_day VARCHAR(15),\n    trip_day_weekend_ind CHAR(1),\n    dispatch_trip_count INT,\n    street_hail_trip_count INT,\n    trip_distance FLOAT,\n    fare_amount FLOAT,\n    trip_duration INT\n) as ass\n\nGO\n\nSELECT TOP(100) * FROM trip_data_green_ass_view ",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

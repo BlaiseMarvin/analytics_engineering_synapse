@@ -1,0 +1,20 @@
+{
+	"name": "26_execute_stored_procedures",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/ldw"
+		},
+		"content": {
+			"query": "-- assignment stuff needed\n-- borough, trip date, trip day, trip day weekend ind, dispatch trip count, street-hail trip count, trip distance, trip duration, total fare amount\n\n-- know if a trip is street-hail or not check the trip type table\n-- \n\nEXEC gold.trip_data_green_assignment '2020','01'\nEXEC gold.trip_data_green_assignment '2020','02'\nEXEC gold.trip_data_green_assignment '2020','03'\nEXEC gold.trip_data_green_assignment '2020','04'\nEXEC gold.trip_data_green_assignment '2020','05'\nEXEC gold.trip_data_green_assignment '2020','06'\nEXEC gold.trip_data_green_assignment '2020','07'\nEXEC gold.trip_data_green_assignment '2020','08'\nEXEC gold.trip_data_green_assignment '2020','09'\nEXEC gold.trip_data_green_assignment '2020','10'\nEXEC gold.trip_data_green_assignment '2020','11'\nEXEC gold.trip_data_green_assignment '2020','12'\nEXEC gold.trip_data_green_assignment '2021','01'\nEXEC gold.trip_data_green_assignment '2021','02'\nEXEC gold.trip_data_green_assignment '2021','03'\nEXEC gold.trip_data_green_assignment '2021','04'\nEXEC gold.trip_data_green_assignment '2021','05'\nEXEC gold.trip_data_green_assignment '2021','06'",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
