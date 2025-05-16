@@ -1010,7 +1010,7 @@
 					"name": "nyc_taxi/ldw"
 				},
 				"content": {
-					"query": "-- stored procedures\n-- to write data\nUSE nyc_taxi_ldw\n\nGO\n\nCREATE VIEW silver.vw_trip_data_green AS\nSELECT\n    trip_data.*,\n    trip_data.filepath(1) AS year,\n    trip_data.filepath(2) AS month\nFROM OPENROWSET(\n    BULK 'silver/trip_data_green/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_src',\n    FORMAT = 'PARQUET'\n) AS trip_data;",
+					"query": "-- stored procedures\n-- to write data\nUSE nyc_taxi_ldw\n\nGO\nDROP VIEW IF EXISTS silver.vw_trip_data_green\nGO\nCREATE VIEW silver.vw_trip_data_green AS\nSELECT\n    trip_data.*,\n    trip_data.filepath(1) AS year,\n    trip_data.filepath(2) AS month\nFROM OPENROWSET(\n    BULK 'silver/trip_data_green/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_src',\n    FORMAT = 'PARQUET'\n)  AS trip_data;\n\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -1057,6 +1057,167 @@
 				},
 				"content": {
 					"query": "USE nyc_taxi_ldw;\n\nEXEC silver.usp_silver_trip_data_green '2020','01'\nEXEC silver.usp_silver_trip_data_green '2020','02'\nEXEC silver.usp_silver_trip_data_green '2020','03'\nEXEC silver.usp_silver_trip_data_green '2020','04'\nEXEC silver.usp_silver_trip_data_green '2020','05'\nEXEC silver.usp_silver_trip_data_green '2020','06'\nEXEC silver.usp_silver_trip_data_green '2020','07'\nEXEC silver.usp_silver_trip_data_green '2020','08'\nEXEC silver.usp_silver_trip_data_green '2020','09'\nEXEC silver.usp_silver_trip_data_green '2020','10'\nEXEC silver.usp_silver_trip_data_green '2020','11'\nEXEC silver.usp_silver_trip_data_green '2020','12'\nEXEC silver.usp_silver_trip_data_green '2021','01'\nEXEC silver.usp_silver_trip_data_green '2021','02'\nEXEC silver.usp_silver_trip_data_green '2021','03'\nEXEC silver.usp_silver_trip_data_green '2021','04'\nEXEC silver.usp_silver_trip_data_green '2021','05'\nEXEC silver.usp_silver_trip_data_green '2021','06'",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_ldw",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/23_create_gold_trip_data_green')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/ldw"
+				},
+				"content": {
+					"query": "USE nyc_taxi_ldw;\n\n/*\n    Select statement needed for campaign requirements\n*/\n\n/*SELECT\n    td.year,\n    td.month,\n    tz.borough,\n    CONVERT(DATE, td.lpep_pickup_datetime) AS trip_date,\n    cal.day_name AS trip_day,\n    CASE \n        WHEN cal.day_name IN ('Saturday','Sunday') THEN 'Y'\n        ELSE 'N'\n    END AS trip_day_weekend_ind,\n    SUM(CASE WHEN pt.payment_type_desc='Credit card' THEN 1 ELSE 0 END) AS card_trip_count\nFROM silver.vw_trip_data_green td\nJOIN silver.taxi_zone tz ON td.pu_location_id = tz.location_id\nJOIN silver.calendar cal ON (cal.date = CONVERT(DATE, td.lpep_pickup_datetime))\nJOIN silver.payment_type pt ON (td.payment_type = pt.payment_type)\nWHERE td.year = '2020' AND td.month = '01'\nGROUP BY td.year,\n         td.month,\n         tz.borough,\n         CONVERT(DATE, td.lpep_pickup_datetime),\n         cal.day_name\n*/\nEXEC gold.usp_gold_trip_data_green '2020','01'\n\nEXEC gold.usp_gold_trip_data_green '2020','02'\nEXEC gold.usp_gold_trip_data_green '2020','03'\nEXEC gold.usp_gold_trip_data_green '2020','04'\nEXEC gold.usp_gold_trip_data_green '2020','05'\nEXEC gold.usp_gold_trip_data_green '2020','06'\nEXEC gold.usp_gold_trip_data_green '2020','07'\nEXEC gold.usp_gold_trip_data_green '2020','08'\nEXEC gold.usp_gold_trip_data_green '2020','09'\nEXEC gold.usp_gold_trip_data_green '2020','10'\nEXEC gold.usp_gold_trip_data_green '2020','11'\nEXEC gold.usp_gold_trip_data_green '2020','12'\nEXEC gold.usp_gold_trip_data_green '2021','01'\nEXEC gold.usp_gold_trip_data_green '2021','02'\nEXEC gold.usp_gold_trip_data_green '2021','03'\nEXEC gold.usp_gold_trip_data_green '2021','04'\nEXEC gold.usp_gold_trip_data_green '2021','05'\nEXEC gold.usp_gold_trip_data_green '2021','06'\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_ldw",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/usp_gold_trip_data_green')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/ldw/usp"
+				},
+				"content": {
+					"query": "USE nyc_taxi_ldw\nGO\nCREATE OR ALTER PROCEDURE gold.usp_gold_trip_data_green\n@year VARCHAR(4),\n@month VARCHAR(2)\nAS\nBEGIN \n    DECLARE @create_sql_stmt NVARCHAR(MAX), \n            @drop_sql_stmt NVARCHAR(MAX)\n    \n    SET @create_sql_stmt = \n    ' CREATE EXTERNAL TABLE gold.trip_data_green_' +@year +'_' +@month +\n    ' WITH \n        (\n            LOCATION = ''gold/trip_data_green/year=' +@year + '/month='+ @month +''',\n            DATA_SOURCE = nyc_taxi_src,\n            FILE_FORMAT = parquet_file_format\n        ) AS \n        SELECT\n            td.year,\n            td.month,\n            tz.borough,\n            CONVERT(DATE, td.lpep_pickup_datetime) AS trip_date,\n            cal.day_name AS trip_day,\n            CASE \n                WHEN cal.day_name IN (''Saturday'',''Sunday'') THEN ''Y''\n                ELSE ''N''\n            END AS trip_day_weekend_ind,\n            SUM(CASE WHEN pt.payment_type_desc=''Credit card'' THEN 1 ELSE 0 END) AS card_trip_count\n        FROM silver.vw_trip_data_green td\n        JOIN silver.taxi_zone tz ON td.pu_location_id = tz.location_id\n        JOIN silver.calendar cal ON (cal.date = CONVERT(DATE, td.lpep_pickup_datetime))\n        JOIN silver.payment_type pt ON (td.payment_type = pt.payment_type)\n        WHERE td.year =''' + @year +'''AND td.month =''' + @month+ '''\n        GROUP BY td.year,\n                td.month,\n                tz.borough,\n                CONVERT(DATE, td.lpep_pickup_datetime),\n                cal.day_name';\n    \n    EXEC sp_executesql @create_sql_stmt;\n\n    SET @drop_sql_stmt = \n    'DROP EXTERNAL TABLE gold.trip_data_green_'+@year+'_'+@month;\n\n    EXEC sp_executesql @drop_sql_stmt;\nEND;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_ldw",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/24_create_gold_views')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/ldw"
+				},
+				"content": {
+					"query": "USE nyc_taxi_ldw\n\nGO\n\n-- CREATE view for the trip_data_green\nDROP VIEW IF EXISTS gold.vw_trip_data_green\nGO\n\nCREATE VIEW gold.vw_trip_data_green\nAS\nSELECT \n    result.filepath(1) AS year,\n    result.filepath(2) AS month,\n    result.*\nFROM OPENROWSET(\n    BULK 'gold/trip_data_green/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_src',\n    FORMAT = 'PARQUET'\n) WITH (\n    borough VARCHAR(15),\n    trip_date DATE,\n    trip_day VARCHAR(10),\n    trip_day_weekend_ind CHAR(1),\n    card_trip_count INT,\n    cash_trip_count INT\n) AS result\n\nGO\n\nSELECT * FROM gold.vw_trip_data_green",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_ldw",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/26_execute_stored_procedures')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/ldw"
+				},
+				"content": {
+					"query": "-- assignment stuff needed\n-- borough, trip date, trip day, trip day weekend ind, dispatch trip count, street-hail trip count, trip distance, trip duration, total fare amount\n\n-- know if a trip is street-hail or not check the trip type table\n-- \n\nEXEC gold.trip_data_green_assignment '2020','01'\nEXEC gold.trip_data_green_assignment '2020','02'\nEXEC gold.trip_data_green_assignment '2020','03'\nEXEC gold.trip_data_green_assignment '2020','04'\nEXEC gold.trip_data_green_assignment '2020','05'\nEXEC gold.trip_data_green_assignment '2020','06'\nEXEC gold.trip_data_green_assignment '2020','07'\nEXEC gold.trip_data_green_assignment '2020','08'\nEXEC gold.trip_data_green_assignment '2020','09'\nEXEC gold.trip_data_green_assignment '2020','10'\nEXEC gold.trip_data_green_assignment '2020','11'\nEXEC gold.trip_data_green_assignment '2020','12'\nEXEC gold.trip_data_green_assignment '2021','01'\nEXEC gold.trip_data_green_assignment '2021','02'\nEXEC gold.trip_data_green_assignment '2021','03'\nEXEC gold.trip_data_green_assignment '2021','04'\nEXEC gold.trip_data_green_assignment '2021','05'\nEXEC gold.trip_data_green_assignment '2021','06'",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_ldw",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/25_assignment_build_script')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/ldw"
+				},
+				"content": {
+					"query": "SELECT\n    td.year,\n    td.month,\n    tz.borough,\n    CONVERT(DATE, td.lpep_pickup_datetime) AS trip_date,\n    cal.day_name AS trip_day,\n    CASE\n        WHEN cal.day_name IN ('Saturday','Sunday') THEN 'Y'\n        ELSE 'N'\n    END AS trip_day_weekend_ind,\n    SUM(CASE WHEN tt.trip_type_desc = 'Dispatch' THEN 1 ELSE 0 END) AS dispatch_trip_count,\n    SUM(CASE WHEN tt.trip_type_desc = 'Street-hail' THEN 1 ELSE 0 END) AS street_hail_trip_count,\n    SUM(td.trip_distance) AS trip_distance,\n    SUM(td.fare_amount) AS fare_amount,\n    SUM(DATEDIFF(minute,td.lpep_pickup_datetime,td.lpep_dropoff_datetime)) AS trip_duration\nFROM silver.vw_trip_data_green td\nJOIN silver.taxi_zone tz ON tz.location_id = td.pu_location_id\nJOIN silver.calendar cal ON cal.date = CONVERT(DATE, td.lpep_pickup_datetime)\nJOIN silver.trip_type tt ON td.trip_type = tt.trip_type\nWHERE td.year = '2020' AND td.month = '01'\nGROUP BY td.year, td.month, tz.borough, CONVERT(DATE, td.lpep_pickup_datetime), cal.day_name\n\n\nSELECT * FROM silver.trip_type",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_ldw",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/usp_gold_trip_data_assignment')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/ldw/usp"
+				},
+				"content": {
+					"query": "USE nyc_taxi_ldw\n\nGO\n\nCREATE OR ALTER PROCEDURE gold.trip_data_green_assignment\n@year VARCHAR(4),\n@month VARCHAR(2)\nAS\nBEGIN\n    DECLARE @create_sql_stmt NVARCHAR(MAX),\n            @delete_sql_stmt NVARCHAR(MAX)\n    \n    SET @create_sql_stmt =\n    'CREATE EXTERNAL TABLE gold.trip_data_green_ass_' + @year +'_' +@month + '\n    WITH (\n        LOCATION = ''gold/trip_data_green_ass/year=' +@year +'/month=' +@month +''',\n        DATA_SOURCE = nyc_taxi_src,\n        FILE_FORMAT = parquet_file_format\n    ) AS\n    SELECT\n        td.year,\n        td.month,\n        tz.borough,\n        CONVERT(DATE, td.lpep_pickup_datetime) AS trip_date,\n        cal.day_name AS trip_day,\n        CASE\n            WHEN cal.day_name IN (''Saturday'',''Sunday'') THEN ''Y''\n            ELSE ''N''\n        END AS trip_day_weekend_ind,\n        SUM(CASE WHEN tt.trip_type_desc = ''Dispatch'' THEN 1 ELSE 0 END) AS dispatch_trip_count,\n        SUM(CASE WHEN tt.trip_type_desc = ''Street-hail'' THEN 1 ELSE 0 END) AS street_hail_trip_count,\n        SUM(td.trip_distance) AS trip_distance,\n        SUM(td.fare_amount) AS fare_amount,\n        SUM(DATEDIFF(minute,td.lpep_pickup_datetime,td.lpep_dropoff_datetime)) AS trip_duration\n    FROM silver.vw_trip_data_green td\n    JOIN silver.taxi_zone tz ON tz.location_id = td.pu_location_id\n    JOIN silver.calendar cal ON cal.date = CONVERT(DATE, td.lpep_pickup_datetime)\n    JOIN silver.trip_type tt ON td.trip_type = tt.trip_type\n    WHERE td.year = ''' +@year +''' AND td.month =''' +@month+'''\n    GROUP BY td.year, td.month, tz.borough, CONVERT(DATE, td.lpep_pickup_datetime), cal.day_name\n    ';\n\n    EXEC sp_executesql @create_sql_stmt;\n\n    SET @delete_sql_stmt = \n    'DROP EXTERNAL TABLE gold.trip_data_green_ass_' +@year +'_' +@month;\n\n    EXEC sp_executesql @delete_sql_stmt;\nEND;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_ldw",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/27_create_gold_assignment_view')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/ldw"
+				},
+				"content": {
+					"query": "USE nyc_taxi_ldw\nGO \n\nDROP VIEW IF EXISTS trip_data_green_ass_view\n\nGO\n\nCREATE VIEW trip_data_green_ass_view AS\nSELECT \n    ass.filepath(1) AS year,\n    ass.filepath(2) AS month,\n    ass.* \nFROM OPENROWSET(\n    BULK 'gold/trip_data_green_ass/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_src',\n    FORMAT = 'PARQUET'\n) WITH (\n    borough VARCHAR(50),\n    trip_date DATE,\n    trip_day VARCHAR(15),\n    trip_day_weekend_ind CHAR(1),\n    dispatch_trip_count INT,\n    street_hail_trip_count INT,\n    trip_distance FLOAT,\n    fare_amount FLOAT,\n    trip_duration INT\n) as ass\n\nGO\n\nSELECT TOP(100) * FROM trip_data_green_ass_view ",
 					"metadata": {
 						"language": "sql"
 					},
