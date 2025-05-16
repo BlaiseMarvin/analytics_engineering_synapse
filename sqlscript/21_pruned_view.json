@@ -5,7 +5,7 @@
 			"name": "nyc_taxi/ldw"
 		},
 		"content": {
-			"query": "-- stored procedures\n-- to write data\nUSE nyc_taxi_ldw\n\nGO\n\nCREATE VIEW silver.vw_trip_data_green AS\nSELECT\n    trip_data.*,\n    trip_data.filepath(1) AS year,\n    trip_data.filepath(2) AS month\nFROM OPENROWSET(\n    BULK 'silver/trip_data_green/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_src',\n    FORMAT = 'PARQUET'\n) AS trip_data;",
+			"query": "-- stored procedures\n-- to write data\nUSE nyc_taxi_ldw\n\nGO\nDROP VIEW IF EXISTS silver.vw_trip_data_green\nGO\nCREATE VIEW silver.vw_trip_data_green AS\nSELECT\n    trip_data.*,\n    trip_data.filepath(1) AS year,\n    trip_data.filepath(2) AS month\nFROM OPENROWSET(\n    BULK 'silver/trip_data_green/year=*/month=*/*.parquet',\n    DATA_SOURCE = 'nyc_taxi_src',\n    FORMAT = 'PARQUET'\n)  AS trip_data;\n\n",
 			"metadata": {
 				"language": "sql"
 			},
