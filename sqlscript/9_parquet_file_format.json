@@ -5,7 +5,7 @@
 			"name": "nyc_taxi/ldw"
 		},
 		"content": {
-			"query": "--Create an external file format for PARQUET files.\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'parquet_file_format')\n    CREATE EXTERNAL FILE FORMAT parquet_file_format\n    WITH (\n        FORMAT_TYPE = PARQUET,\n        DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n        );",
+			"query": "--Create an external file format for PARQUET files.\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'parquet_file_format')\n    CREATE EXTERNAL FILE FORMAT parquet_file_format\n    WITH (\n        FORMAT_TYPE = PARQUET,\n        DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n        );\n\nIF NOT EXISTS(SELECT * FROM sys.external_file_formats WHERE name = 'parquet_file_format2')\n    CREATE EXTERNAL FILE FORMAT parquet_file_format2\n    WITH (\n        FORMAT_TYPE = PARQUET\n    )",
 			"metadata": {
 				"language": "sql"
 			},
