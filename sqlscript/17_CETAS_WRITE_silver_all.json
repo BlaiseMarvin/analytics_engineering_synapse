@@ -1,0 +1,20 @@
+{
+	"name": "17_CETAS_WRITE_silver_all",
+	"properties": {
+		"folder": {
+			"name": "nyc_taxi/ldw"
+		},
+		"content": {
+			"query": "-- create external tables and transform the data to parquet format as well for \n-- calendar.csv, trip_type.csv, and vendor.csv\n\n-- here we go\nUSE nyc_taxi_ldw;\n\nCREATE EXTERNAL TABLE silver.calendar\nWITH(\n    LOCATION = 'silver/calendar',\n    DATA_SOURCE = nyc_taxi_src,\n    FILE_FORMAT = parquet_file_format\n)\nAS \nSELECT *\nFROM bronze.calendar\n\n\n-- checking out trip_type\n\nCREATE EXTERNAL TABLE silver.trip_type\nWITH (\n    LOCATION = 'silver/trip_type',\n    DATA_SOURCE = nyc_taxi_src,\n    FILE_FORMAT = parquet_file_format\n)\nAS \nSELECT *\nFROM bronze.trip_type\n\n\n-- now doing vendor data\n\nCREATE EXTERNAL TABLE silver.vendor\nWITH (\n    LOCATION = 'silver/vendor',\n    DATA_SOURCE = nyc_taxi_src,\n    FILE_FORMAT = parquet_file_format\n)\nAS \n    SELECT *\n    FROM bronze.vendor",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "nyc_taxi_ldw",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
