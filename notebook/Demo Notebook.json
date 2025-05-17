@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "8e6699db-b9f3-432a-8cd2-037940389e56"
+				"spark.autotune.trackingId": "2909c710-de9d-43ec-9d5a-e7cbc790f438"
 			}
 		},
 		"metadata": {
@@ -66,14 +66,14 @@
 				"source": [
 					"x = 'Hello World!'"
 				],
-				"execution_count": 1
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
 				"source": [
 					"import pandas as pd"
 				],
-				"execution_count": 2
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -87,7 +87,7 @@
 					"%%sql\n",
 					"SELECT 1;"
 				],
-				"execution_count": 3
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -120,7 +120,7 @@
 					"silver_folder_path = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/silver/'\n",
 					"gold_folder_path = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/gold/'"
 				],
-				"execution_count": 4
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -128,7 +128,7 @@
 					"# set the spark config to be able to get the partitioned columns year and month as strings rather than integers\n",
 					"spark.conf.set(\"spark.sql.sources.partitionColumnTypeInference.enabled\",\"false\")"
 				],
-				"execution_count": 5
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -144,7 +144,52 @@
 					"CREATE DATABASE IF NOT EXISTS nyc_taxi_ldw_spark\n",
 					"LOCATION 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/gold/'"
 				],
-				"execution_count": 6
+				"execution_count": 9
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# read the silver data to be processed\n",
+					"trip_data_green_df = spark.read.parquet(f\"{silver_folder_path}/trip_data_green\")"
+				],
+				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"trip_data_green_df.head(5)"
+				],
+				"execution_count": 17
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# perform the required aggregations:\n",
+					"# 1. total trip count\n",
+					"# 2. total fare amount\n",
+					"from pyspark.sql.functions import *"
+				],
+				"execution_count": 16
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"trip_data_green_agg_df = trip_data_green_df\\\n",
+					"                        .groupBy(\"year\",\"month\",\"pu_location_id\",\"do_location_id\")\\\n",
+					"                        .agg(count(lit(1)).alias(\"total_trip_count\"),\n",
+					"                        round(sum(\"fare_amount\"),2).alias(\"total_fare_amount\"))"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# write the aggregated data to the gold table for consumption\n",
+					"trip_data_green_agg_df.write.mode(\"overwrite\").partitionBy(\"year\",\"month\")\\\n",
+					"                      .format(\"parquet\")\\\n",
+					"                      .saveAsTable(\"nyc_taxi_ldw_spark.trip_data_green_agg\")"
+				],
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",

@@ -62,6 +62,35 @@
 					},
 					"waitOnCompletion": true
 				}
+			},
+			{
+				"name": "Execute Trip Data Green NB",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute Create Silver Tables",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Execute Silver Trip Data Green",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_create_gold_trip_data_agg",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
 			}
 		],
 		"annotations": []
