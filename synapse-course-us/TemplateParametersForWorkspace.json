@@ -22,6 +22,12 @@
 		},
 		"synapse-course-us-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"value": "https://syanpsecoursedlblaise.dfs.core.windows.net"
+		},
+		"ls_nyc_taxi_ldw2_properties_typeProperties_server": {
+			"value": "synapse-course-us-ondemand.sql.azuresynapse.net"
+		},
+		"ls_nyc_taxi_ldw2_properties_typeProperties_database": {
+			"value": "nyc_taxi_ldw"
 		}
 	}
 }
