@@ -1,0 +1,19 @@
+{
+	"name": "ls_nyc_taxi_ldw2",
+	"properties": {
+		"description": "Second connection to my serverless logical data warehouse",
+		"annotations": [],
+		"type": "AzureSqlDW",
+		"typeProperties": {
+			"server": "synapse-course-us-ondemand.sql.azuresynapse.net",
+			"database": "nyc_taxi_ldw",
+			"encrypt": "mandatory",
+			"trustServerCertificate": false,
+			"authenticationType": "SystemAssignedManagedIdentity"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
