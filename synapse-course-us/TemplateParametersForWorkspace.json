@@ -11,11 +11,17 @@
 		"bing-covid-19-data_sasUri": {
 			"value": ""
 		},
-		"synapse-course-us-WorkspaceDefaultStorage_properties_typeProperties_url": {
-			"value": "https://syanpsecoursedlblaise.dfs.core.windows.net"
+		"ls_serverless_sql_pool_db_nyc_taxi_ldw_properties_typeProperties_server": {
+			"value": "synapse-course-us-ondemand.sql.azuresynapse.net"
+		},
+		"ls_serverless_sql_pool_db_nyc_taxi_ldw_properties_typeProperties_database": {
+			"value": "nyc_taxi_ldw"
 		},
 		"ls_synapsecoursedl_properties_typeProperties_url": {
 			"value": "https://syanpsecoursedlblaise.dfs.core.windows.net/"
+		},
+		"synapse-course-us-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://syanpsecoursedlblaise.dfs.core.windows.net"
 		}
 	}
 }
