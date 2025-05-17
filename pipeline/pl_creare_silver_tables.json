@@ -74,6 +74,9 @@
 				"defaultValue": "silver.usp_silver_taxi_zone"
 			}
 		},
+		"folder": {
+			"name": "demo"
+		},
 		"annotations": []
 	}
 }
