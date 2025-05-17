@@ -1,0 +1,158 @@
+{
+	"name": "Demo Notebook",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "coursepool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "8e6699db-b9f3-432a-8cd2-037940389e56"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/bb4563b7-621b-4adf-a14c-567e4b069294/resourceGroups/synapse-course-rg/providers/Microsoft.Synapse/workspaces/synapse-course-us/bigDataPools/coursepool",
+				"name": "coursepool",
+				"type": "Spark",
+				"endpoint": "https://synapse-course-us.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/coursepool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.4",
+				"nodeCount": 10,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"#### This is a demo notebook"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"x = 'Hello World!'"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import pandas as pd"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\n",
+					"SELECT 1;"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"Trip Data Aggregation:\n",
+					"\n",
+					"Group By Columns:\n",
+					" - year\n",
+					" - month\n",
+					" - pickup location ID\n",
+					" - dropoff location id\n",
+					"\n",
+					"Aggregated columns\n",
+					" - totak trip count \n",
+					" - total fare amount"
+				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# set up the folder paths so it can be used later:\n",
+					"bronze_folder_path = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/raw/'\n",
+					"silver_folder_path = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/silver/'\n",
+					"gold_folder_path = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/gold/'"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"# set the spark config to be able to get the partitioned columns year and month as strings rather than integers\n",
+					"spark.conf.set(\"spark.sql.sources.partitionColumnTypeInference.enabled\",\"false\")"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql \n",
+					"-- create database to which we are going to write the data\n",
+					"CREATE DATABASE IF NOT EXISTS nyc_taxi_ldw_spark\n",
+					"LOCATION 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/gold/'"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					""
+				],
+				"execution_count": null
+			}
+		]
+	}
+}
