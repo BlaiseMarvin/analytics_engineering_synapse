@@ -260,6 +260,55 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/pl_create_gold_trip_data_agg')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Create Gold Trip Data Green Agg",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Demo Notebook",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "coursepool",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Small",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Small",
+							"authentication": {
+								"type": "MSI"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/notebooks/Demo Notebook')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/coursepool')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/pl_create_gold_trip_data_green')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -2233,6 +2282,26 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 3')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "SELECT TOP (100) [pu_location_id]\n,[do_location_id]\n,[total_trip_count]\n,[total_fare_amount]\n,[year]\n,[month]\n FROM [nyc_taxi_ldw_spark].[dbo].[trip_data_green_agg]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_ldw_spark",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/best_practices_dtypes')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -2460,7 +2529,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "a4a914f8-cf61-4893-a9c9-1b277508adb3"
+						"spark.autotune.trackingId": "2909c710-de9d-43ec-9d5a-e7cbc790f438"
 					}
 				},
 				"metadata": {
@@ -2485,8 +2554,7 @@
 						"sparkVersion": "3.4",
 						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2506,7 +2574,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"x = 'Hello World!'"
 						],
@@ -2515,7 +2582,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pandas as pd"
 						],
@@ -2562,7 +2628,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"# set up the folder paths so it can be used later:\n",
 							"bronze_folder_path = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/raw/'\n",
@@ -2574,7 +2639,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"# set the spark config to be able to get the partitioned columns year and month as strings rather than integers\n",
 							"spark.conf.set(\"spark.sql.sources.partitionColumnTypeInference.enabled\",\"false\")"
@@ -2601,7 +2665,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"# read the silver data to be processed\n",
 							"trip_data_green_df = spark.read.parquet(f\"{silver_folder_path}/trip_data_green\")"
@@ -2611,7 +2674,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"trip_data_green_df.head(5)"
 						],
@@ -2620,7 +2682,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"# perform the required aggregations:\n",
 							"# 1. total trip count\n",
@@ -2632,7 +2693,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"trip_data_green_agg_df = trip_data_green_df\\\n",
 							"                        .groupBy(\"year\",\"month\",\"pu_location_id\",\"do_location_id\")\\\n",
@@ -2644,7 +2704,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"# write the aggregated data to the gold table for consumption\n",
 							"trip_data_green_agg_df.write.mode(\"overwrite\").partitionBy(\"year\",\"month\")\\\n",
@@ -2656,7 +2715,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							""
 						],
@@ -2693,73 +2751,36 @@
 			"location": "westus2"
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/SQL script 3')]",
+			"name": "[concat(parameters('workspaceName'), '/nyc_taxi_dwh')]",
+			"type": "Microsoft.Synapse/workspaces/sqlPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/1_ctas_trip_data_green_agg')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
+				"folder": {
+					"name": "nyc_taxi/dwh"
+				},
 				"content": {
-					"query": "SELECT TOP (100) [pu_location_id]\n,[do_location_id]\n,[total_trip_count]\n,[total_fare_amount]\n,[year]\n,[month]\n FROM [nyc_taxi_ldw_spark].[dbo].[trip_data_green_agg]",
+					"query": "CREATE SCHEMA staging \nGO\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'parquet_file_format') \n\tCREATE EXTERNAL FILE FORMAT parquet_file_format \n\tWITH ( FORMAT_TYPE = PARQUET)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'nyc_taxi_data_src') \n\tCREATE EXTERNAL DATA SOURCE nyc_taxi_data_src\n\tWITH (\n\t\tLOCATION = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net' \n\t)\nGO\nIF OBJECT_ID('staging.ext_trip_data_green_agg') IS NOT NULL \n\tDROP EXTERNAL TABLE staging.ext_trip_data_green_agg\nGO\nCREATE EXTERNAL TABLE staging.ext_trip_data_green_agg (\n\t[pu_location_id] int,\n\t[do_location_id] int,\n\t[total_trip_count] bigint,\n\t[total_fare_amount] float\n\t)\n\tWITH (\n\tLOCATION = 'gold/trip_data_green_agg',\n\tDATA_SOURCE = nyc_taxi_data_src,\n\tFILE_FORMAT = parquet_file_format\n\t)\nGO\n\n\nSELECT TOP 100 * FROM staging.ext_trip_data_green_agg\nGO\nCREATE SCHEMA dwh\nGO\nCREATE TABLE dwh.trip_data_green_agg\n    WITH ( \n      CLUSTERED COLUMNSTORE INDEX,\n\t  DISTRIBUTION = ROUND_ROBIN    \n    )  \n    AS SELECT * FROM staging.ext_trip_data_green_agg\n\n\nSELECT TOP(100) * FROM dwh.trip_data_green_agg",
 					"metadata": {
 						"language": "sql"
 					},
 					"currentConnection": {
-						"databaseName": "nyc_taxi_ldw_spark",
-						"poolName": "Built-in"
+						"databaseName": "nyc_taxi_dwh",
+						"poolName": "nyc_taxi_dwh"
 					},
 					"resultLimit": 5000
 				},
 				"type": "SqlQuery"
 			},
 			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/pl_create_gold_trip_data_agg')]",
-			"type": "Microsoft.Synapse/workspaces/pipelines",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"activities": [
-					{
-						"name": "Create Gold Trip Data Green Agg",
-						"type": "SynapseNotebook",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"notebook": {
-								"referenceName": "Demo Notebook",
-								"type": "NotebookReference"
-							},
-							"snapshot": true,
-							"sparkPool": {
-								"referenceName": "coursepool",
-								"type": "BigDataPoolReference"
-							},
-							"executorSize": "Small",
-							"conf": {
-								"spark.dynamicAllocation.enabled": true
-							},
-							"driverSize": "Small",
-							"authentication": {
-								"type": "MSI"
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('workspaceId'), '/notebooks/Demo Notebook')]",
-				"[concat(variables('workspaceId'), '/bigDataPools/coursepool')]"
-			]
 		}
 	]
 }
