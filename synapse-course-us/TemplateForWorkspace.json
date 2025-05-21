@@ -1578,6 +1578,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/1_ctas_trip_data_green_agg')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/dwh"
+				},
+				"content": {
+					"query": "CREATE SCHEMA staging \nGO\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'parquet_file_format') \n\tCREATE EXTERNAL FILE FORMAT parquet_file_format \n\tWITH ( FORMAT_TYPE = PARQUET)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'nyc_taxi_data_src') \n\tCREATE EXTERNAL DATA SOURCE nyc_taxi_data_src\n\tWITH (\n\t\tLOCATION = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net' \n\t)\nGO\nIF OBJECT_ID('staging.ext_trip_data_green_agg') IS NOT NULL \n\tDROP EXTERNAL TABLE staging.ext_trip_data_green_agg\nGO\nCREATE EXTERNAL TABLE staging.ext_trip_data_green_agg (\n\t[pu_location_id] int,\n\t[do_location_id] int,\n\t[total_trip_count] bigint,\n\t[total_fare_amount] float\n\t)\n\tWITH (\n\tLOCATION = 'gold/trip_data_green_agg',\n\tDATA_SOURCE = nyc_taxi_data_src,\n\tFILE_FORMAT = parquet_file_format\n\t)\nGO\n\n\nSELECT TOP 100 * FROM staging.ext_trip_data_green_agg\nGO\nCREATE SCHEMA dwh\nGO\nCREATE TABLE dwh.trip_data_green_agg\n    WITH ( \n      CLUSTERED COLUMNSTORE INDEX,\n\t  DISTRIBUTION = ROUND_ROBIN    \n    )  \n    AS SELECT * FROM staging.ext_trip_data_green_agg\n\n\nSELECT TOP(100) * FROM dwh.trip_data_green_agg",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_dwh",
+						"poolName": "nyc_taxi_dwh"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/1_explore_taxi_zone')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -1777,6 +1800,29 @@
 					"currentConnection": {
 						"databaseName": "nyc_taxi_ldw",
 						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/2_copy_into_table')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "nyc_taxi/dwh"
+				},
+				"content": {
+					"query": "IF OBJECT_ID('dwh.trip_data_green_agg_copy') IS NOT NULL \n\tDROP TABLE dwh.trip_data_green_agg_copy\nGO\nCREATE TABLE dwh.trip_data_green_agg_copy\n\t(\n\t [pu_location_id] bigint,\n\t [do_location_id] bigint,\n\t [total_trip_count] bigint,\n\t [total_fare_amount] float\n\t)\nWITH\n\t(\n\tDISTRIBUTION = ROUND_ROBIN,\n\t CLUSTERED COLUMNSTORE INDEX\n\t -- HEAP\n\t)\nGO\n\n--Uncomment the 4 lines below to create a stored procedure for data pipeline orchestration​\n--CREATE PROC bulk_load_trip_data_green_agg_copy\n--AS\n--BEGIN\nCOPY INTO dwh.trip_data_green_agg_copy\n(pu_location_id 1, do_location_id 2, total_trip_count 3, total_fare_amount 4)\nFROM 'https://syanpsecoursedlblaise.dfs.core.windows.net/nyc-taxi-data/gold/trip_data_green_agg'\nWITH\n(\n\tFILE_TYPE = 'PARQUET'\n\t,MAXERRORS = 0\n\t,COMPRESSION = 'snappy'\n)\n--END\nGO\n\nSELECT TOP 100 * FROM dwh.trip_data_green_agg_copy\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "nyc_taxi_dwh",
+						"poolName": "nyc_taxi_dwh"
 					},
 					"resultLimit": 5000
 				},
@@ -2529,7 +2575,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "2909c710-de9d-43ec-9d5a-e7cbc790f438"
+						"spark.autotune.trackingId": "7cd317ce-b396-4758-8bed-dd24e10aa89c"
 					}
 				},
 				"metadata": {
@@ -2554,7 +2600,8 @@
 						"sparkVersion": "3.4",
 						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2574,6 +2621,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"x = 'Hello World!'"
 						],
@@ -2582,6 +2630,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pandas as pd"
 						],
@@ -2628,6 +2677,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# set up the folder paths so it can be used later:\n",
 							"bronze_folder_path = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/raw/'\n",
@@ -2639,6 +2689,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# set the spark config to be able to get the partitioned columns year and month as strings rather than integers\n",
 							"spark.conf.set(\"spark.sql.sources.partitionColumnTypeInference.enabled\",\"false\")"
@@ -2665,6 +2716,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# read the silver data to be processed\n",
 							"trip_data_green_df = spark.read.parquet(f\"{silver_folder_path}/trip_data_green\")"
@@ -2674,6 +2726,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"trip_data_green_df.head(5)"
 						],
@@ -2682,6 +2735,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# perform the required aggregations:\n",
 							"# 1. total trip count\n",
@@ -2693,6 +2747,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"trip_data_green_agg_df = trip_data_green_df\\\n",
 							"                        .groupBy(\"year\",\"month\",\"pu_location_id\",\"do_location_id\")\\\n",
@@ -2704,6 +2759,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# write the aggregated data to the gold table for consumption\n",
 							"trip_data_green_agg_df.write.mode(\"overwrite\").partitionBy(\"year\",\"month\")\\\n",
@@ -2714,9 +2770,23 @@
 						"execution_count": 20
 					},
 					{
-						"cell_type": "code",
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
 						"source": [
-							""
+							"Taxi Data:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"path = "
 						],
 						"outputs": [],
 						"execution_count": null
@@ -2755,53 +2825,596 @@
 			"type": "Microsoft.Synapse/workspaces/sqlPools",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
+				"collation": "SQL_Latin1_General_CP1_CI_AS",
+				"maxSizeBytes": 263882790666240,
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [],
+			"location": "westus2"
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/1_ctas_trip_data_green_agg')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"name": "[concat(parameters('workspaceName'), '/Learn_Spark')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
-				"folder": {
-					"name": "nyc_taxi/dwh"
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "coursepool",
+					"type": "BigDataPoolReference"
 				},
-				"content": {
-					"query": "CREATE SCHEMA staging \nGO\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'parquet_file_format') \n\tCREATE EXTERNAL FILE FORMAT parquet_file_format \n\tWITH ( FORMAT_TYPE = PARQUET)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'nyc_taxi_data_src') \n\tCREATE EXTERNAL DATA SOURCE nyc_taxi_data_src\n\tWITH (\n\t\tLOCATION = 'abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net' \n\t)\nGO\nIF OBJECT_ID('staging.ext_trip_data_green_agg') IS NOT NULL \n\tDROP EXTERNAL TABLE staging.ext_trip_data_green_agg\nGO\nCREATE EXTERNAL TABLE staging.ext_trip_data_green_agg (\n\t[pu_location_id] int,\n\t[do_location_id] int,\n\t[total_trip_count] bigint,\n\t[total_fare_amount] float\n\t)\n\tWITH (\n\tLOCATION = 'gold/trip_data_green_agg',\n\tDATA_SOURCE = nyc_taxi_data_src,\n\tFILE_FORMAT = parquet_file_format\n\t)\nGO\n\n\nSELECT TOP 100 * FROM staging.ext_trip_data_green_agg\nGO\nCREATE SCHEMA dwh\nGO\nCREATE TABLE dwh.trip_data_green_agg\n    WITH ( \n      CLUSTERED COLUMNSTORE INDEX,\n\t  DISTRIBUTION = ROUND_ROBIN    \n    )  \n    AS SELECT * FROM staging.ext_trip_data_green_agg\n\n\nSELECT TOP(100) * FROM dwh.trip_data_green_agg",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "nyc_taxi_dwh",
-						"poolName": "nyc_taxi_dwh"
-					},
-					"resultLimit": 5000
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "a6689c15-ebc1-4bd3-96b7-364e7c150e15"
+					}
 				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/2_copy_into_table')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"folder": {
-					"name": "nyc_taxi/dwh"
-				},
-				"content": {
-					"query": "IF OBJECT_ID('dwh.trip_data_green_agg_copy') IS NOT NULL \n\tDROP TABLE dwh.trip_data_green_agg_copy\nGO\nCREATE TABLE dwh.trip_data_green_agg_copy\n\t(\n\t [pu_location_id] bigint,\n\t [do_location_id] bigint,\n\t [total_trip_count] bigint,\n\t [total_fare_amount] float\n\t)\nWITH\n\t(\n\tDISTRIBUTION = ROUND_ROBIN,\n\t CLUSTERED COLUMNSTORE INDEX\n\t -- HEAP\n\t)\nGO\n\n--Uncomment the 4 lines below to create a stored procedure for data pipeline orchestration​\n--CREATE PROC bulk_load_trip_data_green_agg_copy\n--AS\n--BEGIN\nCOPY INTO dwh.trip_data_green_agg_copy\n(pu_location_id 1, do_location_id 2, total_trip_count 3, total_fare_amount 4)\nFROM 'https://syanpsecoursedlblaise.dfs.core.windows.net/nyc-taxi-data/gold/trip_data_green_agg'\nWITH\n(\n\tFILE_TYPE = 'PARQUET'\n\t,MAXERRORS = 0\n\t,COMPRESSION = 'snappy'\n)\n--END\nGO\n\nSELECT TOP 100 * FROM dwh.trip_data_green_agg_copy\nGO",
-					"metadata": {
-						"language": "sql"
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
 					},
-					"currentConnection": {
-						"databaseName": "nyc_taxi_dwh",
-						"poolName": "nyc_taxi_dwh"
+					"language_info": {
+						"name": "python"
 					},
-					"resultLimit": 5000
+					"a365ComputeOptions": {
+						"id": "/subscriptions/bb4563b7-621b-4adf-a14c-567e4b069294/resourceGroups/synapse-course-rg/providers/Microsoft.Synapse/workspaces/synapse-course-us/bigDataPools/coursepool",
+						"name": "coursepool",
+						"type": "Spark",
+						"endpoint": "https://synapse-course-us.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/coursepool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.4",
+						"nodeCount": 10,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
 				},
-				"type": "SqlQuery"
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"from pyspark.sql import SparkSession\n",
+							"from pyspark.sql.types import StructType, StructField, IntegerType, StringType\n",
+							"import pyspark.sql.functions as func"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# check out the spark session\n",
+							"print(spark)"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# define the datatypes:\n",
+							"myschema = StructType([\\\n",
+							"    StructField(\"userID\",IntegerType(),True),\n",
+							"    StructField(\"name\", StringType(), True),\n",
+							"    StructField(\"age\",IntegerType(),True),\n",
+							"    StructField(\"friends\", IntegerType(),True)\n",
+							"])"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"people = spark.read.format(\"csv\")\\\n",
+							"                    .schema(myschema)\\\n",
+							"                    .option(\"path\",\"abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/spark_resources/fakefriends.csv\")\\\n",
+							"                    .load()"
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"people"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# performing transformations\n",
+							"output = people.select(people.userID, people.name,\\\n",
+							"                        people.age, people.friends)\\\n",
+							"                .where(people.age<30).withColumn('insert_ts', func.current_timestamp())\\\n",
+							"                .orderBy(people.userID)"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"output.show()"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"output.count()"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# creating a temp view:\n",
+							"output.createOrReplaceTempView(\"Peoples\")"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# running a simple sql query \n",
+							"spark.sql(\"select name, age, friends, insert_ts from Peoples\").show()"
+						],
+						"outputs": [],
+						"execution_count": 10
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"Ops Mgmt "
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"ops_path = \"abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/spark_resources/operations_management.csv\""
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"print(spark.version)"
+						],
+						"outputs": [],
+						"execution_count": 12
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"data = spark.read.format(\"csv\")\\\n",
+							"                 .option(\"inferSchema\",\"true\")\\\n",
+							"                 .option(\"header\",\"true\")\\\n",
+							"                 .option(\"path\",ops_path)\\\n",
+							"                 .load()"
+						],
+						"outputs": [],
+						"execution_count": 13
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# view schema\n",
+							"data.printSchema()"
+						],
+						"outputs": [],
+						"execution_count": 14
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"data_2 = data.select(\"industry\",\"value\")\\\n",
+							"             .filter((func.col(\"value\")>200) & (func.col(\"industry\") != \"total\"))\\\n",
+							"             .orderBy(func.desc(\"value\"))"
+						],
+						"outputs": [],
+						"execution_count": 20
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"data_2.printSchema()"
+						],
+						"outputs": [],
+						"execution_count": 21
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"data_2.show(5)"
+						],
+						"outputs": [],
+						"execution_count": 22
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"data_2.createOrReplaceTempView(\"data\")"
+						],
+						"outputs": [],
+						"execution_count": 23
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"spark.sql(\"SELECT industry, value FROM data WHERE value > 200 AND industry != 'total' \").show(5)"
+						],
+						"outputs": [],
+						"execution_count": 25
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"Spark SQL Tables and Views:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"spark.catalog.listDatabases()"
+						],
+						"outputs": [],
+						"execution_count": 26
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"data.rdd.getNumPartitions()"
+						],
+						"outputs": [],
+						"execution_count": 28
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"Taxi Data:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"df = spark.read.format(\"parquet\")\\\n",
+							"                .option(\"path\",\"abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/spark_resources/fhvhv_tripdata_2021-02.parquet\")\\\n",
+							"                .load()"
+						],
+						"outputs": [],
+						"execution_count": 46
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"df = df.repartition(8)"
+						],
+						"outputs": [],
+						"execution_count": 47
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"df.show()"
+						],
+						"outputs": [],
+						"execution_count": 48
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"df.rdd.getNumPartitions()"
+						],
+						"outputs": [],
+						"execution_count": 31
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"df = df.repartition(8)"
+						],
+						"outputs": [],
+						"execution_count": 39
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"df.show()"
+						],
+						"outputs": [],
+						"execution_count": 40
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"spark.conf.get(\"spark.sql.adaptive.skewJoin.enabled\")"
+						],
+						"outputs": [],
+						"execution_count": 41
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"Handling Data Skewness:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"from pyspark.sql import DataFrame\n",
+							"import pyspark.sql.functions as F"
+						],
+						"outputs": [],
+						"execution_count": 49
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"from pyspark.sql import SparkSession"
+						],
+						"outputs": [],
+						"execution_count": 51
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"def prepare_trips_data(spark: SparkSession):\n",
+							"    pu_loc_to_change = [\n",
+							"        236, 132, 161, 186, 142, 141, 48, 239, 170, 162, 230, 163, 79, 234, 263, 140, 238, 107, 68, 138, 229, 249,\n",
+							"        237, 164, 90, 43, 100, 246, 231, 262, 113, 233, 143, 137, 114, 264, 148, 151\n",
+							"    ]\n",
+							"    res_df = spark.read.format(\"parquet\")\\\n",
+							"                        .option(\"path\",\"abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/spark_resources/data/*.parquet\")\\\n",
+							"                        .load()\\\n",
+							"                       .withColumn(\n",
+							"                            \"PULocationID\",\n",
+							"                            F.when(F.col(\"PULocationID\").isin(pu_loc_to_change),F.lit(237)).otherwise(F.col(\"PULocationID\"))\n",
+							"                       )\n",
+							"    return res_df"
+						],
+						"outputs": [],
+						"execution_count": 76
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"Detecting Skew:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"def join_on_skewed_data(spark: SparkSession):\n",
+							"    trips_data = prepare_trips_data(spark=spark)\n",
+							"    location_details_data = spark.read.format(\"csv\")\\\n",
+							"                                      .option(\"path\",\"abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/spark_resources/taxi+_zone_lookup.csv\")\\\n",
+							"                                      .option(\"header\",\"true\")\\\n",
+							"                                      .load()\n",
+							"    \n",
+							"    trips_with_pickup_location_details = trips_data\\\n",
+							"                                        .join(location_details_data, F.col(\"trips_data.PULocationID\") == F.col(\"location_details_data.LocationID\"),\"inner\")\n",
+							"    \n",
+							"    trips_with_pickup_location_details\\\n",
+							"    .groupBy(\"Zone\")\\\n",
+							"    .agg(F.avg(\"trip_distance\").alias(\"avg_trip_distance\"))\\\n",
+							"    .sort(F.col(\"avg_trip_distance\").desc())\\\n",
+							"    .show(truncate=False, n=1000)\n",
+							"\n",
+							"    trips_with_pickup_location_details\\\n",
+							"    .groupBy(\"Borough\")\\\n",
+							"    .agg(F.avg(\"trip_distance\").alias(\"avg_trip_distance\"))\\\n",
+							"    .sort(F.col(\"avg_trip_distance\").desc())\\\n",
+							"    .show(truncate=False, n=1000)"
+						],
+						"outputs": [],
+						"execution_count": 85
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"To observe skewness, Adaptive Query Execution needs to be disabled. Disable broadcast joins as well."
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"#\n",
+							"spark.conf.set(\"spark.sql.autoBroadcastJoinThreshold\", \"-1\")\n",
+							"spark.conf.set(\"spark.sql.shuffle.partitions\", \"201\")\n",
+							"spark.conf.set(\"spark.sql.adaptive.enabled\", \"false\")"
+						],
+						"outputs": [],
+						"execution_count": 86
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"join_on_skewed_data(spark=spark)"
+						],
+						"outputs": [],
+						"execution_count": 87
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"test_df = prepare_trips_data(spark = spark)"
+						],
+						"outputs": [],
+						"execution_count": 74
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"location_details_data = spark.read.format(\"csv\")\\\n",
+							"                                      .option(\"path\",\"abfss://nyc-taxi-data@syanpsecoursedlblaise.dfs.core.windows.net/spark_resources/taxi+_zone_lookup.csv\")\\\n",
+							"                                      .option(\"header\",\"true\")\\\n",
+							"                                      .load()"
+						],
+						"outputs": [],
+						"execution_count": 88
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"test_df.printSchema()"
+						],
+						"outputs": [],
+						"execution_count": 89
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"location_details_data.printSchema()"
+						],
+						"outputs": [],
+						"execution_count": 90
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"trips_with_pickup_location_details = test_df.join(location_details_data, F.col(\"PULocationID\") == F.col(\"LocationID\"), \"inner\")"
+						],
+						"outputs": [],
+						"execution_count": 92
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"trips_with_pickup_location_details\\\n",
+							"    .groupBy(\"Zone\")\\\n",
+							"    .agg(F.avg(\"trip_distance\").alias(\"avg_trip_distance\"))\\\n",
+							"    .sort(F.col(\"avg_trip_distance\").desc())\\\n",
+							"    .show(truncate=False, n=1000)"
+						],
+						"outputs": [],
+						"execution_count": 93
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"trips_with_pickup_location_details\\\n",
+							"    .groupBy(\"Borough\")\\\n",
+							"    .agg(F.avg(\"trip_distance\").alias(\"avg_trip_distance\"))\\\n",
+							"    .sort(F.col(\"avg_trip_distance\").desc())\\\n",
+							"    .show(truncate=False, n=1000)"
+						],
+						"outputs": [],
+						"execution_count": 94
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
 			},
 			"dependsOn": []
 		}
