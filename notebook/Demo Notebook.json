@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2909c710-de9d-43ec-9d5a-e7cbc790f438"
+				"spark.autotune.trackingId": "31162bc3-5f20-4074-af1c-57dbcbd14c50"
 			}
 		},
 		"metadata": {
@@ -192,9 +192,22 @@
 				"execution_count": 20
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"Taxi Data:"
+				]
+			},
+			{
 				"cell_type": "code",
 				"source": [
-					""
+					"path = "
 				],
 				"execution_count": null
 			}
